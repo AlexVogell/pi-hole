@@ -145,6 +145,7 @@ Some notable features include:
 - [Updating Ad Lists](https://docs.pi-hole.net/core/pihole-command/#gravity)
 - [Querying Ad Lists for blocked domains](https://docs.pi-hole.net/core/pihole-command/#query)
 - [Enabling and Disabling Pi-hole](https://docs.pi-hole.net/core/pihole-command/#enable-disable)
+- [Proxy Configuration](PROXY.md) for network operations through HTTP/HTTPS/SOCKS proxies
 - ... and _many_ more!
 
 You can read our [Core Feature Breakdown](https://docs.pi-hole.net/core/pihole-command/#pi-hole-core) for more information.

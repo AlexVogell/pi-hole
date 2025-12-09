@@ -48,6 +48,9 @@ domainsExtension="domains"
 curl_connect_timeout=10
 etag_support=false
 
+# Load proxy configuration if available
+loadProxyConfiguration
+
 # Check gravity temp directory
 if [ ! -d "${GRAVITY_TMPDIR}" ] || [ ! -w "${GRAVITY_TMPDIR}" ]; then
   echo -e "  ${COL_RED}Gravity temporary directory does not exist or is not a writeable directory, falling back to /tmp. ${COL_NC}"
