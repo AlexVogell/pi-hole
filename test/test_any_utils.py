@@ -73,7 +73,7 @@ def test_loadProxyConfiguration(host):
     echo "HTTPS_PROXY=$HTTPS_PROXY"
     """
     )
-    
+
     assert "HTTP_PROXY=http://proxy.example.com:8080" in output.stdout
     assert "HTTPS_PROXY=https://secure.example.com:8443" in output.stdout
 

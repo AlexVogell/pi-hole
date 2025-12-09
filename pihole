@@ -155,7 +155,7 @@ proxyFunc() {
             http_proxy=$(getFTLConfigValue misc.http_proxy 2>/dev/null || echo "")
             https_proxy=$(getFTLConfigValue misc.https_proxy 2>/dev/null || echo "")
             all_proxy=$(getFTLConfigValue misc.all_proxy 2>/dev/null || echo "")
-            
+
             echo "Current proxy settings:"
             if [ -n "${http_proxy}" ]; then
                 echo -e "  HTTP proxy:  ${COL_GREEN}${http_proxy}${COL_NC}"
