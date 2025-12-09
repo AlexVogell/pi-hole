@@ -70,6 +70,120 @@ SetWebPassword() {
     fi
 }
 
+proxyFunc() {
+    if [[ "$2" == "-h" ]] || [[ "$2" == "--help" ]]; then
+        echo "Configure proxy settings for Pi-hole network operations
+    Usage: ${COL_GREEN}pihole proxy${COL_NC} ${COL_YELLOW}[command]${COL_NC} ${COL_CYAN}[value]${COL_NC}
+
+  Commands:
+    ${COL_YELLOW}set http${COL_NC} ${COL_CYAN}<proxy_url>${COL_NC}     Set HTTP proxy (e.g., http://proxy.example.com:8080)
+    ${COL_YELLOW}set https${COL_NC} ${COL_CYAN}<proxy_url>${COL_NC}    Set HTTPS proxy
+    ${COL_YELLOW}set all${COL_NC} ${COL_CYAN}<proxy_url>${COL_NC}      Set proxy for all protocols (including SOCKS5)
+    ${COL_YELLOW}clear http${COL_NC}                Clear HTTP proxy setting
+    ${COL_YELLOW}clear https${COL_NC}               Clear HTTPS proxy setting
+    ${COL_YELLOW}clear all${COL_NC}                 Clear all proxy settings
+    ${COL_YELLOW}show${COL_NC}                      Show current proxy settings
+
+  Examples:
+    pihole proxy set http http://proxy.example.com:8080
+    pihole proxy set all socks5://127.0.0.1:1080
+    pihole proxy clear all
+    pihole proxy show"
+        exit 0
+    fi
+
+    case "${2}" in
+        "set")
+            case "${3}" in
+                "http")
+                    if [ -z "$4" ]; then
+                        echo -e "  ${CROSS} Error: Proxy URL is required"
+                        echo -e "  Usage: pihole proxy set http <proxy_url>"
+                        exit 1
+                    fi
+                    setFTLConfigValue "misc.http_proxy" "$4"
+                    echo -e "  ${TICK} HTTP proxy set to: $4"
+                    ;;
+                "https")
+                    if [ -z "$4" ]; then
+                        echo -e "  ${CROSS} Error: Proxy URL is required"
+                        echo -e "  Usage: pihole proxy set https <proxy_url>"
+                        exit 1
+                    fi
+                    setFTLConfigValue "misc.https_proxy" "$4"
+                    echo -e "  ${TICK} HTTPS proxy set to: $4"
+                    ;;
+                "all")
+                    if [ -z "$4" ]; then
+                        echo -e "  ${CROSS} Error: Proxy URL is required"
+                        echo -e "  Usage: pihole proxy set all <proxy_url>"
+                        exit 1
+                    fi
+                    setFTLConfigValue "misc.all_proxy" "$4"
+                    echo -e "  ${TICK} All-protocol proxy set to: $4"
+                    ;;
+                *)
+                    echo -e "  ${CROSS} Invalid proxy type. Use 'http', 'https', or 'all'"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "clear")
+            case "${3}" in
+                "http")
+                    setFTLConfigValue "misc.http_proxy" ""
+                    echo -e "  ${TICK} HTTP proxy cleared"
+                    ;;
+                "https")
+                    setFTLConfigValue "misc.https_proxy" ""
+                    echo -e "  ${TICK} HTTPS proxy cleared"
+                    ;;
+                "all")
+                    setFTLConfigValue "misc.http_proxy" ""
+                    setFTLConfigValue "misc.https_proxy" ""
+                    setFTLConfigValue "misc.all_proxy" ""
+                    echo -e "  ${TICK} All proxy settings cleared"
+                    ;;
+                *)
+                    echo -e "  ${CROSS} Invalid proxy type. Use 'http', 'https', or 'all'"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "show")
+            local http_proxy https_proxy all_proxy
+            http_proxy=$(getFTLConfigValue misc.http_proxy 2>/dev/null || echo "")
+            https_proxy=$(getFTLConfigValue misc.https_proxy 2>/dev/null || echo "")
+            all_proxy=$(getFTLConfigValue misc.all_proxy 2>/dev/null || echo "")
+            
+            echo "Current proxy settings:"
+            if [ -n "${http_proxy}" ]; then
+                echo -e "  HTTP proxy:  ${COL_GREEN}${http_proxy}${COL_NC}"
+            else
+                echo -e "  HTTP proxy:  ${COL_GRAY}(not set)${COL_NC}"
+            fi
+            
+            if [ -n "${https_proxy}" ]; then
+                echo -e "  HTTPS proxy: ${COL_GREEN}${https_proxy}${COL_NC}"
+            else
+                echo -e "  HTTPS proxy: ${COL_GRAY}(not set)${COL_NC}"
+            fi
+            
+            if [ -n "${all_proxy}" ]; then
+                echo -e "  All proxy:   ${COL_GREEN}${all_proxy}${COL_NC}"
+            else
+                echo -e "  All proxy:   ${COL_GRAY}(not set)${COL_NC}"
+            fi
+            ;;
+        *)
+            echo -e "  ${CROSS} Invalid command. Use 'set', 'clear', or 'show'"
+            echo -e "  Use 'pihole proxy --help' for more information"
+            exit 1
+            ;;
+    esac
+    exit 0
+}
+
 listFunc() {
   "${PI_HOLE_SCRIPT_DIR}"/list.sh "$@"
   exit 0
@@ -515,6 +629,8 @@ Options:
   setpassword [pwd]   Set the password for the web interface
                         Without optional argument, password is read interactively.
                         When specifying a password directly, enclose it in single quotes.
+  proxy               Configure proxy settings for network operations
+                        Add '-h' for more info on proxy usage
   -g, updateGravity   Update the list of ad-serving domains
   -h, --help, help    Show this help dialog
   -l, logging         Specify whether the Pi-hole log should be used
@@ -573,6 +689,7 @@ case "${1}" in
   "reloaddns"                     ) need_root=true;;
   "reloadlists"                   ) need_root=true;;
   "setpassword"                   ) need_root=true;;
+  "proxy"                         ) need_root=true;;
   "checkout"                      ) need_root=true;;
   "updatechecker"                 ) need_root=true;;
   "arpflush"                      ) need_root=true;; # Deprecated, use networkflush instead
@@ -608,6 +725,7 @@ case "${1}" in
   "reloaddns"                     ) reloadDNS "reload";;
   "reloadlists"                   ) reloadDNS "reload-lists";;
   "setpassword"                   ) SetWebPassword "$@";;
+  "proxy"                         ) proxyFunc "$@";;
   "checkout"                      ) piholeCheckoutFunc "$@";;
   "updatechecker"                 ) shift; updateCheckFunc "$@";;
   "arpflush"                      ) arpFunc "$@";; # Deprecated, use networkflush instead

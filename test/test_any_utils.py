@@ -57,3 +57,23 @@ def test_setFTLConfigValue_getFTLConfigValue(host):
     )
 
     assert "[ 9.9.9.9 ]" in output.stdout
+
+
+def test_loadProxyConfiguration(host):
+    """
+    Confirms loadProxyConfiguration loads proxy settings and exports them as environment variables
+    """
+    output = host.run(
+        """
+    source /opt/pihole/utils.sh
+    setFTLConfigValue "misc.http_proxy" "http://proxy.example.com:8080" > /dev/null
+    setFTLConfigValue "misc.https_proxy" "https://secure.example.com:8443" > /dev/null
+    loadProxyConfiguration
+    echo "HTTP_PROXY=$HTTP_PROXY"
+    echo "HTTPS_PROXY=$HTTPS_PROXY"
+    """
+    )
+    
+    assert "HTTP_PROXY=http://proxy.example.com:8080" in output.stdout
+    assert "HTTPS_PROXY=https://secure.example.com:8443" in output.stdout
+
