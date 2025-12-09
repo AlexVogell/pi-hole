@@ -9,11 +9,21 @@
 # This file is copyright under the latest version of the EUPL.
 # Please see LICENSE file for your rights under this license.
 
-readonly PI_HOLE_SCRIPT_DIR="/opt/pihole"
-readonly PROXY_CONFIG_FILE="/etc/pihole/proxy.conf"
+: "${PI_HOLE_SCRIPT_DIR:=/opt/pihole}"
+: "${PROXY_CONFIG_FILE:=/etc/pihole/proxy.conf}"
 
 # shellcheck source=./COL_TABLE
-source "${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
+if [[ -f "${PI_HOLE_SCRIPT_DIR}/COL_TABLE" ]]; then
+    source "${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
+else
+    # Define minimal color variables if COL_TABLE is not available
+    TICK="[✓]"
+    CROSS="[✗]"
+    INFO="[i]"
+    COL_NC=""
+    COL_GREEN=""
+    COL_RED=""
+fi
 
 #######################
 # Set proxy configuration
