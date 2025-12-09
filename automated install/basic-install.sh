@@ -24,6 +24,13 @@ set -e
 # When using "su" an incomplete PATH could be passed: https://github.com/pi-hole/pi-hole/issues/3209
 export PATH+=':/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
+# Load proxy configuration if it exists
+PROXY_CONFIG_FILE="/etc/pihole/proxy.conf"
+if [[ -f "${PROXY_CONFIG_FILE}" ]]; then
+  # shellcheck source=/dev/null
+  . "${PROXY_CONFIG_FILE}"
+fi
+
 # Trap any errors, then exit
 trap abort INT QUIT TERM
 
