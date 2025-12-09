@@ -24,6 +24,13 @@ coltable="${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
 # shellcheck source=./advanced/Scripts/database_migration/gravity-db.sh
 . "/etc/.pihole/advanced/Scripts/database_migration/gravity-db.sh"
 
+# Load proxy configuration if it exists
+PROXY_CONFIG_FILE="/etc/pihole/proxy.conf"
+if [[ -f "${PROXY_CONFIG_FILE}" ]]; then
+  # shellcheck source=/dev/null
+  . "${PROXY_CONFIG_FILE}"
+fi
+
 basename="pihole"
 PIHOLE_COMMAND="/usr/local/bin/${basename}"
 
