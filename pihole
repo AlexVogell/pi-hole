@@ -495,6 +495,8 @@ proxyFunc() {
     exit 1
   fi
   
+  # Check if second argument is a help flag (e.g., "pihole setproxy --help")
+  # $1 = command (setproxy/getproxy/clearproxy), $2 = first arg after command
   local action="${2}"
   
   if [[ "${action}" == "-h" ]] || [[ "${action}" == "--help" ]]; then

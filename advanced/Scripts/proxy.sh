@@ -92,7 +92,9 @@ getProxy() {
 
 #######################
 # Load proxy configuration for use in scripts
-# This function should be sourced by scripts that need proxy support
+# This function should be called/sourced by scripts that need proxy support
+# It exports environment variables that curl and other tools automatically use
+# This function is used by gravity.sh, piholeDebug.sh, updatecheck.sh, and basic-install.sh
 #######################
 loadProxyConfig() {
     if [[ -f "${PROXY_CONFIG_FILE}" ]]; then
