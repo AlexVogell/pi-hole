@@ -162,13 +162,13 @@ proxyFunc() {
             else
                 echo -e "  HTTP proxy:  ${COL_GRAY}(not set)${COL_NC}"
             fi
-            
+
             if [ -n "${https_proxy}" ]; then
                 echo -e "  HTTPS proxy: ${COL_GREEN}${https_proxy}${COL_NC}"
             else
                 echo -e "  HTTPS proxy: ${COL_GRAY}(not set)${COL_NC}"
             fi
-            
+
             if [ -n "${all_proxy}" ]; then
                 echo -e "  All proxy:   ${COL_GREEN}${all_proxy}${COL_NC}"
             else
