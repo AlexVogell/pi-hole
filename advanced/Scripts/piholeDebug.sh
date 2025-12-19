@@ -44,6 +44,13 @@ fi
 # shellcheck source=/dev/null
 . /etc/pihole/versions
 
+# Load proxy configuration if it exists
+PROXY_CONFIG_FILE="/etc/pihole/proxy.conf"
+if [[ -f "${PROXY_CONFIG_FILE}" ]]; then
+  # shellcheck source=/dev/null
+  . "${PROXY_CONFIG_FILE}"
+fi
+
 # Read the value of an FTL config key. The value is printed to stdout.
 get_ftl_conf_value() {
     local key=$1

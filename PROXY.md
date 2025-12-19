@@ -1,216 +1,161 @@
-# Pi-hole Proxy Configuration
+# Proxy Configuration for Pi-hole
 
-Pi-hole now supports optional proxy configuration for all network operations, including downloading blocklists, updating Pi-hole components, and accessing external resources.
+Pi-hole now supports optional proxy configuration for all network operations, including:
+- Downloading blocklists (gravity updates)
+- Checking for Pi-hole updates
+- Uploading debug logs
+- Downloading FTL binary during installation
 
-## Overview
+This is particularly useful for users behind corporate proxies or those who want to route Pi-hole's traffic through a proxy server.
 
-Users who need to route Pi-hole's network traffic through a proxy (HTTP, HTTPS, or SOCKS5) can now configure this directly through the Pi-hole CLI. This is particularly useful for:
+## Features
 
-- Users behind corporate firewalls
-- Those using privacy-focused SOCKS proxies (like Mullvad, Tor, etc.)
-- Network setups that require all traffic to go through a proxy server
-- Users who frequently switch between different network configurations
+- Support for HTTP, HTTPS, and SOCKS5 proxies
+- Ability to exclude specific hosts from proxying (NO_PROXY)
+- Simple CLI commands for managing proxy settings
+- Automatic proxy usage by all Pi-hole network operations
+- No configuration required - works out of the box without a proxy
 
-## Configuration
+## Usage
 
-### Using the CLI
+### Setting a Proxy
 
-The `pihole proxy` command provides a simple interface to manage proxy settings:
-
-#### Set a Proxy
-
-```bash
-# Set HTTP proxy
-sudo pihole proxy set http http://proxy.example.com:8080
-
-# Set HTTPS proxy
-sudo pihole proxy set https https://secure-proxy.example.com:8443
-
-# Set SOCKS5 proxy for all protocols
-sudo pihole proxy set all socks5://127.0.0.1:1080
-
-# Set proxy with authentication
-sudo pihole proxy set http http://username:password@proxy.example.com:8080
-```
-
-#### View Current Settings
+To configure Pi-hole to use a proxy, use the `setproxy` command:
 
 ```bash
-sudo pihole proxy show
+# Set HTTP and HTTPS proxy
+sudo pihole setproxy http://proxy.example.com:8080 https://proxy.example.com:8080
+
+# Set only HTTP proxy
+sudo pihole setproxy http://proxy.example.com:8080
+
+# Set proxy with exclusions
+sudo pihole setproxy http://proxy.example.com:8080 https://proxy.example.com:8080 "localhost,127.0.0.1,.local"
+
+# Set SOCKS5 proxy
+sudo pihole setproxy socks5://proxy.example.com:1080
 ```
 
-This will display:
-```
-Current proxy settings:
-  HTTP proxy:  http://proxy.example.com:8080
-  HTTPS proxy: https://secure-proxy.example.com:8443
-  All proxy:   (not set)
-```
+### Viewing Current Proxy Configuration
 
-#### Clear Proxy Settings
+To view the current proxy configuration:
 
 ```bash
-# Clear HTTP proxy only
-sudo pihole proxy clear http
-
-# Clear HTTPS proxy only
-sudo pihole proxy clear https
-
-# Clear all proxy settings
-sudo pihole proxy clear all
+pihole getproxy
 ```
 
-#### Get Help
+This will display the configured HTTP proxy, HTTPS proxy, and any exclusions.
+
+### Clearing Proxy Configuration
+
+To remove the proxy configuration:
 
 ```bash
-sudo pihole proxy --help
+sudo pihole clearproxy
 ```
 
-### Direct Configuration
+### Help
 
-Proxy settings are stored in Pi-hole's FTL configuration. You can also configure them directly using:
+To get help on proxy commands:
 
 ```bash
-# Set HTTP proxy
-sudo pihole-FTL --config misc.http_proxy "http://proxy.example.com:8080"
-
-# Set HTTPS proxy
-sudo pihole-FTL --config misc.https_proxy "https://secure-proxy.example.com:8443"
-
-# Set all-protocol proxy (SOCKS5)
-sudo pihole-FTL --config misc.all_proxy "socks5://127.0.0.1:1080"
+pihole setproxy --help
 ```
 
-## Supported Proxy Types
+## Configuration File
 
-Pi-hole supports the following proxy protocols through curl:
+Proxy settings are stored in `/etc/pihole/proxy.conf` as environment variables. This file is automatically sourced by Pi-hole scripts that perform network operations.
 
-- **HTTP proxies**: `http://proxy.example.com:8080`
-- **HTTPS proxies**: `https://proxy.example.com:8443`
-- **SOCKS4 proxies**: `socks4://proxy.example.com:1080`
-- **SOCKS4a proxies**: `socks4a://proxy.example.com:1080`
-- **SOCKS5 proxies**: `socks5://proxy.example.com:1080`
-- **SOCKS5h proxies** (with remote DNS resolution): `socks5h://proxy.example.com:1080`
+The file contains standard proxy environment variables:
+- `HTTP_PROXY` / `http_proxy` - Proxy for HTTP requests
+- `HTTPS_PROXY` / `https_proxy` - Proxy for HTTPS requests
+- `NO_PROXY` / `no_proxy` - Comma-separated list of hosts to exclude from proxying
 
-### Authentication
+## Proxy URL Format
 
-Proxies that require authentication can be configured with credentials in the URL:
+Proxy URLs should follow this format:
 
-```bash
-sudo pihole proxy set http http://username:password@proxy.example.com:8080
-```
-
-**Security Note**: Be cautious when including passwords in proxy URLs as they will be stored in Pi-hole's configuration.
-
-## How It Works
-
-Once configured, Pi-hole automatically uses the proxy settings for:
-
-1. **Gravity updates** (`pihole -g`): When downloading blocklists
-2. **Pi-hole updates** (`pihole -up`): When updating Pi-hole components
-3. **FTL binary downloads**: When installing or updating FTL
-4. **Other network operations**: Any operation that uses curl or respects standard proxy environment variables
-
-The proxy configuration is loaded by:
-- `gravity.sh` - for blocklist downloads
-- `update.sh` - for Pi-hole updates
-- Other scripts that source `utils.sh` and call `loadProxyConfiguration`
-
-## Environment Variables
-
-When proxy settings are configured, Pi-hole exports the following environment variables:
-
-- `HTTP_PROXY` / `http_proxy`
-- `HTTPS_PROXY` / `https_proxy`
-- `ALL_PROXY` / `all_proxy`
-
-These are standard environment variables recognized by curl, wget, and many other networking tools.
-
-## Troubleshooting
-
-### Verify Proxy Settings
-
-```bash
-sudo pihole proxy show
-```
-
-### Test Proxy Connection
-
-After configuring a proxy, test it by running a gravity update:
-
-```bash
-sudo pihole -g
-```
-
-Check the output for any connection errors.
-
-### Check Environment Variables
-
-To verify that proxy environment variables are being set correctly:
-
-```bash
-sudo bash -c 'source /opt/pihole/utils.sh && loadProxyConfiguration && env | grep -i proxy'
-```
-
-### Clear Proxy Settings
-
-If you encounter issues, clear all proxy settings:
-
-```bash
-sudo pihole proxy clear all
-```
-
-### Proxy Authentication Issues
-
-If your proxy requires authentication and you're experiencing issues:
-
-1. Ensure credentials are properly URL-encoded
-2. Check that your proxy server accepts the authentication method
-3. Try setting the proxy without credentials first to isolate the issue
+- HTTP proxy: `http://hostname:port`
+- HTTPS proxy: `https://hostname:port`
+- SOCKS5 proxy: `socks5://hostname:port`
+- With authentication: `http://username:password@hostname:port`
 
 ## Examples
 
-### Corporate Proxy Setup
+### Corporate Proxy
 
 ```bash
-# Configure HTTP and HTTPS proxies for corporate network
-sudo pihole proxy set http http://proxy.corp.example.com:8080
-sudo pihole proxy set https http://proxy.corp.example.com:8080
+sudo pihole setproxy http://proxy.corp.example.com:8080 https://proxy.corp.example.com:8080 "localhost,127.0.0.1,.local,.corp.example.com"
+```
 
-# Verify settings
-sudo pihole proxy show
+### SOCKS5 Proxy (e.g., SSH tunnel)
 
-# Update gravity to test
+```bash
+sudo pihole setproxy socks5://localhost:1080
+```
+
+### Authenticated Proxy
+
+```bash
+sudo pihole setproxy "http://user:pass@proxy.example.com:8080"
+```
+
+## Testing Proxy Configuration
+
+After configuring a proxy, test it by updating gravity:
+
+```bash
 sudo pihole -g
 ```
 
-### SOCKS5 Proxy (e.g., Mullvad, Tor)
+You should see Pi-hole download blocklists through your configured proxy.
+
+## Troubleshooting
+
+### Proxy not working
+
+1. Verify your proxy configuration:
+   ```bash
+   pihole getproxy
+   ```
+
+2. Check if the proxy is accessible:
+   ```bash
+   curl -x http://proxy.example.com:8080 https://api.github.com/
+   ```
+
+3. Check Pi-hole logs for connection errors:
+   ```bash
+   tail -f /var/log/pihole/pihole.log
+   ```
+
+### Clearing proxy after network change
+
+If you change networks and no longer need a proxy:
 
 ```bash
-# Configure SOCKS5 proxy for all traffic
-sudo pihole proxy set all socks5://127.0.0.1:1080
-
-# Verify settings
-sudo pihole proxy show
-
-# Update gravity to test
-sudo pihole -g
+sudo pihole clearproxy
 ```
 
-### Switching Networks
+## Technical Details
 
-When moving between networks with different proxy requirements:
+### How It Works
 
-```bash
-# At work - use corporate proxy
-sudo pihole proxy set all http://proxy.corp.example.com:8080
+1. Proxy settings are stored in `/etc/pihole/proxy.conf`
+2. This file is automatically sourced by:
+   - `gravity.sh` - for blocklist downloads
+   - `piholeDebug.sh` - for debug log uploads
+   - `updatecheck.sh` - for update checks
+   - `basic-install.sh` - for FTL binary downloads
+3. The `curl` command automatically respects the standard `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables
 
-# At home - clear proxy
-sudo pihole proxy clear all
-```
+### Environment Variable Precedence
 
-## See Also
+If you have proxy environment variables set in your shell, they will be overridden by Pi-hole's proxy configuration. To use system-wide proxy settings instead, don't configure Pi-hole's proxy.
 
-- [Pi-hole Documentation](https://docs.pi-hole.net/)
-- [curl Proxy Documentation](https://curl.se/docs/manpage.html#-x)
-- [Standard Proxy Environment Variables](https://about.gitlab.com/blog/2021/01/27/we-need-to-talk-no-proxy/)
+## Notes
+
+- Proxy settings require root/sudo privileges to modify
+- Proxy settings are persistent across reboots
+- The proxy is only used for Pi-hole's own network operations, not for DNS queries
+- Authenticated proxies are supported but credentials are stored in plain text in `/etc/pihole/proxy.conf`

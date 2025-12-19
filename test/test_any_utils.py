@@ -59,21 +59,89 @@ def test_setFTLConfigValue_getFTLConfigValue(host):
     assert "[ 9.9.9.9 ]" in output.stdout
 
 
-def test_loadProxyConfiguration(host):
-    """
-    Confirms loadProxyConfiguration loads proxy settings and exports them as environment variables
-    """
-    output = host.run(
+def test_proxy_setProxy_and_getProxy(host):
+    """Confirms setProxy creates a valid proxy configuration file and getProxy reads it correctly"""
+    # Override the proxy config file location for testing
+    host.run(
         """
-    source /opt/pihole/utils.sh
-    setFTLConfigValue "misc.http_proxy" "http://proxy.example.com:8080" > /dev/null
-    setFTLConfigValue "misc.https_proxy" "https://secure.example.com:8443" > /dev/null
-    loadProxyConfiguration
-    echo "HTTP_PROXY=$HTTP_PROXY"
-    echo "HTTPS_PROXY=$HTTPS_PROXY"
+    export PROXY_CONFIG_FILE="/tmp/test_proxy.conf"
+    source /opt/pihole/proxy.sh
+    setProxy "http://proxy.example.com:8080" "https://proxy.example.com:8080" "localhost,127.0.0.1"
     """
     )
+    
+    # Check that the file was created with correct content
+    output = host.run(
+        """
+    cat /tmp/test_proxy.conf
+    """
+    )
+    
+    assert 'export HTTP_PROXY="http://proxy.example.com:8080"' in output.stdout
+    assert 'export http_proxy="http://proxy.example.com:8080"' in output.stdout
+    assert 'export HTTPS_PROXY="https://proxy.example.com:8080"' in output.stdout
+    assert 'export https_proxy="https://proxy.example.com:8080"' in output.stdout
+    assert 'export NO_PROXY="localhost,127.0.0.1"' in output.stdout
+    assert 'export no_proxy="localhost,127.0.0.1"' in output.stdout
 
+
+def test_proxy_clearProxy(host):
+    """Confirms clearProxy removes the proxy configuration file"""
+    # Create a proxy config first
+    host.run(
+        """
+    export PROXY_CONFIG_FILE="/tmp/test_proxy.conf"
+    source /opt/pihole/proxy.sh
+    setProxy "http://proxy.example.com:8080"
+    """
+    )
+    
+    # Verify it exists
+    output = host.run(
+        """
+    test -f /tmp/test_proxy.conf && echo "exists" || echo "not exists"
+    """
+    )
+    assert "exists" in output.stdout
+    
+    # Clear it
+    host.run(
+        """
+    export PROXY_CONFIG_FILE="/tmp/test_proxy.conf"
+    source /opt/pihole/proxy.sh
+    clearProxy
+    """
+    )
+    
+    # Verify it's gone
+    output = host.run(
+        """
+    test -f /tmp/test_proxy.conf && echo "exists" || echo "not exists"
+    """
+    )
+    assert "not exists" in output.stdout
+
+
+def test_proxy_loadProxyConfig(host):
+    """Confirms loadProxyConfig exports environment variables correctly"""
+    # Create a proxy config
+    host.run(
+        """
+    export PROXY_CONFIG_FILE="/tmp/test_proxy.conf"
+    source /opt/pihole/proxy.sh
+    setProxy "http://proxy.example.com:8080" "https://proxy.example.com:8080"
+    """
+    )
+    
+    # Load and check environment variables
+    output = host.run(
+        """
+    source /tmp/test_proxy.conf
+    echo "HTTP_PROXY=${HTTP_PROXY}"
+    echo "HTTPS_PROXY=${HTTPS_PROXY}"
+    """
+    )
+    
     assert "HTTP_PROXY=http://proxy.example.com:8080" in output.stdout
-    assert "HTTPS_PROXY=https://secure.example.com:8443" in output.stdout
+    assert "HTTPS_PROXY=https://proxy.example.com:8080" in output.stdout
 

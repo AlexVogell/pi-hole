@@ -27,9 +27,6 @@ source "/opt/pihole/COL_TABLE"
 # shellcheck source="./advanced/Scripts/utils.sh"
 source "${PI_HOLE_INSTALL_DIR}/utils.sh"
 
-# Load proxy configuration if available
-loadProxyConfiguration
-
 # is_repo() sourced from basic-install.sh
 # make_repo() sourced from basic-install.sh
 # update_repo() source from basic-install.sh
