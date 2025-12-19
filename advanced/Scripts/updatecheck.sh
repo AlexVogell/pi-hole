@@ -42,6 +42,13 @@ function get_remote_hash() {
 # shellcheck source="./advanced/Scripts/utils.sh"
 . /opt/pihole/utils.sh
 
+# Load proxy configuration if it exists
+PROXY_CONFIG_FILE="/etc/pihole/proxy.conf"
+if [[ -f "${PROXY_CONFIG_FILE}" ]]; then
+  # shellcheck source=/dev/null
+  . "${PROXY_CONFIG_FILE}"
+fi
+
 ADMIN_INTERFACE_DIR=$(getFTLConfigValue "webserver.paths.webroot")$(getFTLConfigValue "webserver.paths.webhome")
 readonly ADMIN_INTERFACE_DIR
 

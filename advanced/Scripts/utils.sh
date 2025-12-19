@@ -102,38 +102,3 @@ setFTLConfigValue(){
         exit 1
     esac
 }
-
-#######################
-# Loads proxy configuration and exports environment variables
-#
-# Reads proxy settings from pihole-FTL config and exports them
-# as environment variables for use by curl and other network tools
-#
-# Example usage:
-# loadProxyConfiguration
-#######################
-loadProxyConfiguration() {
-    local http_proxy_value https_proxy_value all_proxy_value
-
-    # Try to get proxy values from FTL config
-    http_proxy_value=$(getFTLConfigValue misc.http_proxy 2>/dev/null || true)
-    https_proxy_value=$(getFTLConfigValue misc.https_proxy 2>/dev/null || true)
-    all_proxy_value=$(getFTLConfigValue misc.all_proxy 2>/dev/null || true)
-
-    # Export proxy environment variables if they are set
-    # These variables are recognized by curl, wget, and other network tools
-    if [ -n "${http_proxy_value}" ]; then
-        export http_proxy="${http_proxy_value}"
-        export HTTP_PROXY="${http_proxy_value}"
-    fi
-
-    if [ -n "${https_proxy_value}" ]; then
-        export https_proxy="${https_proxy_value}"
-        export HTTPS_PROXY="${https_proxy_value}"
-    fi
-
-    if [ -n "${all_proxy_value}" ]; then
-        export all_proxy="${all_proxy_value}"
-        export ALL_PROXY="${all_proxy_value}"
-    fi
-}

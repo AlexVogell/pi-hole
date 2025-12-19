@@ -24,6 +24,13 @@ coltable="${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
 # shellcheck source=./advanced/Scripts/database_migration/gravity-db.sh
 . "/etc/.pihole/advanced/Scripts/database_migration/gravity-db.sh"
 
+# Load proxy configuration if it exists
+PROXY_CONFIG_FILE="/etc/pihole/proxy.conf"
+if [[ -f "${PROXY_CONFIG_FILE}" ]]; then
+  # shellcheck source=/dev/null
+  . "${PROXY_CONFIG_FILE}"
+fi
+
 basename="pihole"
 PIHOLE_COMMAND="/usr/local/bin/${basename}"
 
@@ -47,9 +54,6 @@ gravityDBcopy="${piholeGitDir}/advanced/Templates/gravity_copy.sql"
 domainsExtension="domains"
 curl_connect_timeout=10
 etag_support=false
-
-# Load proxy configuration if available
-loadProxyConfiguration
 
 # Check gravity temp directory
 if [ ! -d "${GRAVITY_TMPDIR}" ] || [ ! -w "${GRAVITY_TMPDIR}" ]; then
